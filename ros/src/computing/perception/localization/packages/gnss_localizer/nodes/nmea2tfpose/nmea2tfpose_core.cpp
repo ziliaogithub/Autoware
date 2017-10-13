@@ -45,6 +45,7 @@ Nmea2TFPoseNode::Nmea2TFPoseNode()
   , position_time_(0)
   , current_time_(0)
   , orientation_stamp_(0)
+  , fix_type_(0)
 {
   initForROS();
   geo_.set_plane(plane_number_);
@@ -65,6 +66,7 @@ void Nmea2TFPoseNode::initForROS()
 
   // setup publisher
   pub1_ = nh_.advertise<geometry_msgs::PoseStamped>("gnss_pose", 10);
+  pub2_ = nh_.advertise<visualization_msgs::Marker>("gnss_pose_marker", 10);
 }
 
 void Nmea2TFPoseNode::run()
@@ -82,6 +84,47 @@ void Nmea2TFPoseNode::publishPoseStamped()
   pose.pose.position.z = geo_.z();
   pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(roll_, pitch_, yaw_);
   pub1_.publish(pose);
+}
+
+void Nmea2TFPoseNode::publishMarker()
+{
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = MAP_FRAME_;
+  marker.header.stamp = current_time_;
+  marker.ns = "gnss_pose_marker";
+  marker.id = 0;
+  marker.type = visualization_msgs::Marker::ARROW;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.pose.position.x = geo_.y();
+  marker.pose.position.y = geo_.x();
+  marker.pose.position.z = geo_.z();
+  marker.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(roll_, pitch_, yaw_);
+  marker.scale.x = 2.0;
+  marker.scale.y = 0.3;
+  marker.scale.z = 0.3;
+  marker.color.a = 1.0;
+
+  if(fix_type_ == 0)  // invalid
+  {
+    marker.color.r = 0.0; marker.color.g = 0.0; marker.color.b = 0.0;
+  }
+  if(fix_type_ == 1)  // GPS
+  {
+    marker.color.r = 1.0; marker.color.g = 0.0; marker.color.b = 0.0;
+  }
+  if(fix_type_ == 2)  // DGPS
+  {
+    marker.color.r = 1.0; marker.color.g = 0.0; marker.color.b = 0.0;
+  }
+  if(fix_type_ == 4)  // CLAS/FKP positioning FIX (MITSUBISHI ELECTRIC AQLOC) 
+  {
+    marker.color.r = 0.0; marker.color.g = 1.0; marker.color.b = 0.0;
+  }
+  if(fix_type_ == 5)  // CLAS/FKP positioning FLOAT (MITSUBISHI ELECTRIC AQLOC) 
+  {
+    marker.color.r = 0.0; marker.color.g = 0.0; marker.color.b = 1.0;
+  }
+  pub2_.publish(marker);
 }
 
 void Nmea2TFPoseNode::publishTF()
@@ -112,6 +155,7 @@ void Nmea2TFPoseNode::convert(std::vector<std::string> nmea, ros::Time current_s
       pitch_ = -1 * stod(nmea.at(5)) * M_PI / 180.;
       yaw_ = -1 * stod(nmea.at(6)) * M_PI / 180. + M_PI / 2;
       orientation_stamp_ = current_stamp;
+      fix_type_ = 0;
       ROS_INFO("QQ is subscribed.");
     }
     else if (nmea.at(0) == "$PASHR")
@@ -120,6 +164,7 @@ void Nmea2TFPoseNode::convert(std::vector<std::string> nmea, ros::Time current_s
       roll_ = stod(nmea.at(4)) * M_PI / 180.;
       pitch_ = -1 * stod(nmea.at(5)) * M_PI / 180.;
       yaw_ = -1 * stod(nmea.at(2)) * M_PI / 180. + M_PI / 2;
+      fix_type_ = 0;
       ROS_INFO("PASHR is subscribed.");
     }
     else if(nmea.at(0).compare(3, 3, "GGA") == 0)
@@ -127,6 +172,7 @@ void Nmea2TFPoseNode::convert(std::vector<std::string> nmea, ros::Time current_s
       position_time_ = stod(nmea.at(1));
       double lat = stod(nmea.at(2));
       double lon = stod(nmea.at(4));
+      fix_type_ = stoi(nmea.at(6));
       double h = stod(nmea.at(9));
       geo_.set_llh_nmea_degrees(lat, lon, h);
       ROS_INFO("GGA is subscribed.");
@@ -136,6 +182,7 @@ void Nmea2TFPoseNode::convert(std::vector<std::string> nmea, ros::Time current_s
       position_time_ = stoi(nmea.at(1));
       double lat = stod(nmea.at(3));
       double lon = stod(nmea.at(5));
+      fix_type_ = 0;
       double h = 0.0;
       geo_.set_llh_nmea_degrees(lat, lon, h);
       ROS_INFO("GPRMC is subscribed.");
@@ -161,6 +208,7 @@ void Nmea2TFPoseNode::callbackFromNmeaSentence(const nmea_msgs::Sentence::ConstP
       ROS_INFO("QQ is not subscribed. Orientation is created by atan2");
       createOrientation();
       publishPoseStamped();
+      publishMarker();
       publishTF();
       last_geo_ = geo_;
     }
@@ -171,6 +219,7 @@ void Nmea2TFPoseNode::callbackFromNmeaSentence(const nmea_msgs::Sentence::ConstP
   if (fabs(orientation_time_ - position_time_) < e)
   {
     publishPoseStamped();
+    publishMarker();
     publishTF();
     return;
   }

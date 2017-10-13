@@ -17,6 +17,7 @@ private:
 	double m_PLo;          //plane lon
 
 public:
+	geo_pos_conv();
 	double x() const;
 	double y() const;
 	double z() const;

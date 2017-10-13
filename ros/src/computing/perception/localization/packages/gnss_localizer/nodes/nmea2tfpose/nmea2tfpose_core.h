@@ -38,6 +38,7 @@
 // ROS includes
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <visualization_msgs/Marker.h>
 #include <nmea_msgs/Sentence.h>
 #include <tf/transform_broadcaster.h>
 
@@ -60,6 +61,7 @@ private:
 
   // publisher
   ros::Publisher pub1_;
+  ros::Publisher pub2_;
 
   // subscriber
   ros::Subscriber sub1_;
@@ -75,6 +77,7 @@ private:
   double roll_, pitch_, yaw_;
   double orientation_time_, position_time_;
   ros::Time current_time_, orientation_stamp_;
+  int fix_type_;
   tf::TransformBroadcaster br_;
 
   // callbacks
@@ -85,6 +88,7 @@ private:
 
   // functions
   void publishPoseStamped();
+  void publishMarker();
   void publishTF();
   void createOrientation();
   void convert(std::vector<std::string> nmea, ros::Time current_stamp);
