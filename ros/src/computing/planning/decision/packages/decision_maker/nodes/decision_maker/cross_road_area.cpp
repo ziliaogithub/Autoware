@@ -5,10 +5,10 @@
 namespace decision_maker
 {
 #define TARGET_WAYPOINTS_NUM 15  // need to change rosparam
-CrossRoadArea *CrossRoadArea::findClosestCrossRoad(const autoware_msgs::lane &_finalwaypoints,
-                                                   std::vector<CrossRoadArea> &intersects)
+CrossRoadArea* CrossRoadArea::findClosestCrossRoad(const autoware_msgs::lane& _finalwaypoints,
+                                                   std::vector<CrossRoadArea>& intersects)
 {
-  CrossRoadArea *_area = nullptr;
+  CrossRoadArea* _area = nullptr;
 
   amathutils::point _pa;
   amathutils::point _pb;
@@ -47,7 +47,7 @@ CrossRoadArea *CrossRoadArea::findClosestCrossRoad(const autoware_msgs::lane &_f
   return _area;
 }
 
-std::vector<geometry_msgs::Point> convhull(const CrossRoadArea *_TargetArea)
+std::vector<geometry_msgs::Point> convhull(const CrossRoadArea* _TargetArea)
 {
   std::vector<int> enablePoints;
 
@@ -84,7 +84,7 @@ std::vector<geometry_msgs::Point> convhull(const CrossRoadArea *_TargetArea)
   std::vector<geometry_msgs::Point> point_arrays;
   for (auto p = begin(_TargetArea->points); p != end(_TargetArea->points); p++)
   {
-    for (auto &en : enablePoints)
+    for (auto& en : enablePoints)
     {
       if (std::distance(begin(_TargetArea->points), p) == en)
       {
@@ -95,7 +95,7 @@ std::vector<geometry_msgs::Point> convhull(const CrossRoadArea *_TargetArea)
   return point_arrays;
 }
 
-bool CrossRoadArea::isInsideArea(const CrossRoadArea *_TargetArea, geometry_msgs::Point pt)
+bool CrossRoadArea::isInsideArea(const CrossRoadArea* _TargetArea, geometry_msgs::Point pt)
 {
   std::vector<geometry_msgs::Point> point_arrays = convhull(_TargetArea);
 

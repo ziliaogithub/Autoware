@@ -16,7 +16,7 @@
 
 namespace decision_maker
 {
-double DecisionMakerNode::getPoseAngle(const geometry_msgs::Pose &pose)
+double DecisionMakerNode::getPoseAngle(const geometry_msgs::Pose& pose)
 {
   double r, p, y;
 
@@ -27,13 +27,13 @@ double DecisionMakerNode::getPoseAngle(const geometry_msgs::Pose &pose)
   return y;
 }
 
-double DecisionMakerNode::calcPosesAngleDiffN(const geometry_msgs::Pose &p_from, const geometry_msgs::Pose &p_to)
+double DecisionMakerNode::calcPosesAngleDiffN(const geometry_msgs::Pose& p_from, const geometry_msgs::Pose& p_to)
 {
   // convert to [-pi : pi]
   return getPoseAngle(p_from) - getPoseAngle(p_to);
 }
 
-double DecisionMakerNode::calcPosesAngleDiff(const geometry_msgs::Pose &p_from, const geometry_msgs::Pose &p_to)
+double DecisionMakerNode::calcPosesAngleDiff(const geometry_msgs::Pose& p_from, const geometry_msgs::Pose& p_to)
 {
   // convert to [-pi : pi]
   double diff = std::fmod(calcPosesAngleDiffN(p_from, p_to), 2 * M_PI);
@@ -42,7 +42,7 @@ double DecisionMakerNode::calcPosesAngleDiff(const geometry_msgs::Pose &p_from, 
   return diff;
 }
 
-double DecisionMakerNode::calcIntersectWayAngle(const autoware_msgs::lane &laneinArea)
+double DecisionMakerNode::calcIntersectWayAngle(const autoware_msgs::lane& laneinArea)
 {
   double diff = 0.0;
   if (laneinArea.waypoints.empty())
@@ -87,10 +87,10 @@ bool DecisionMakerNode::isLocalizationConvergence(double _x, double _y, double _
     double avg_distances = std::accumulate(distances.begin(), distances.end(), 0) / distances.size();
     if (avg_distances <= param_convergence_threshold_)
     {
-      ret =  ctx->setCurrentState(state_machine::DRIVE_STATE);
+      ret = ctx->setCurrentState(state_machine::DRIVE_STATE);
     }
   }
-  
+
   return ret;
 }
 }

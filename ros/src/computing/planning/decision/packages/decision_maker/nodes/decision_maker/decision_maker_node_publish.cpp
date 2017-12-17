@@ -30,7 +30,7 @@ void DecisionMakerNode::update_pubsub(void)
   // this function will re-definition subscriber.
 }
 
-int DecisionMakerNode::createCrossRoadAreaMarker(visualization_msgs::Marker &crossroad_marker, double scale)
+int DecisionMakerNode::createCrossRoadAreaMarker(visualization_msgs::Marker& crossroad_marker, double scale)
 {
   crossroad_marker.header.frame_id = "/map";
   crossroad_marker.header.stamp = ros::Time();
@@ -65,19 +65,18 @@ void DecisionMakerNode::displayMarker(void)
 
   double scale = 3.0;
   createCrossRoadAreaMarker(crossroad_marker, scale);
-  
+
   detection_area_marker = crossroad_marker;
   detection_area_marker.header.frame_id = param_baselink_tf_;
   detection_area_marker.scale.x = (detectionArea_.x1 - detectionArea_.x2) * param_detection_area_rate_;
   detection_area_marker.scale.y = (detectionArea_.y1 - detectionArea_.y2) * param_detection_area_rate_;
-  detection_area_marker.color.r = foundOtherVehicleForIntersectionStop_?0.0:1.0;
-  detection_area_marker.pose.position.x =  detection_area_marker.scale.x/2;
+  detection_area_marker.color.r = foundOtherVehicleForIntersectionStop_ ? 0.0 : 1.0;
+  detection_area_marker.pose.position.x = detection_area_marker.scale.x / 2;
   detection_area_marker.color.g = 1;
   detection_area_marker.color.b = 0.3;
   detection_area_marker.color.a = 0.5;
   detection_area_marker.type = visualization_msgs::Marker::CUBE;
-  detection_area_marker.lifetime=ros::Duration();
-   
+  detection_area_marker.lifetime = ros::Duration();
 
   inside_marker = crossroad_marker;
   inside_marker.scale.x = scale / 3;
@@ -97,16 +96,16 @@ void DecisionMakerNode::displayMarker(void)
   inside_line_marker = inside_marker;
   inside_line_marker.type = visualization_msgs::Marker::LINE_STRIP;
 
-  for (auto &area : intersects)
+  for (auto& area : intersects)
   {
     area.bbox.header = crossroad_marker.header;
     bbox_array.boxes.push_back(area.bbox);
-    for (const auto &p : area.insideWaypoint_points)
+    for (const auto& p : area.insideWaypoint_points)
     {
       inside_marker.points.push_back(p);
     }
 
-    for (const auto &lane : area.insideLanes)
+    for (const auto& lane : area.insideLanes)
     {
       inside_line_marker.points.clear();
       int id = inside_line_marker.id;
@@ -116,7 +115,7 @@ void DecisionMakerNode::displayMarker(void)
       inside_line_marker.color.r = std::fmod(0.12345 * (id), 1.0);
       inside_line_marker.color.g = std::fmod(0.32345 * (5 - (id % 5)), 1.0);
       inside_line_marker.color.b = std::fmod(0.52345 * (10 - (id % 10)), 1.0);
-      for (const auto &wp : lane.waypoints)
+      for (const auto& wp : lane.waypoints)
       {
         inside_line_marker.points.push_back(wp.pose.pose.position);
       }
@@ -130,7 +129,7 @@ void DecisionMakerNode::displayMarker(void)
   inside_line_marker.color.b = 0.3;
   inside_line_marker.color.a = 1;
   inside_line_marker.ns = "shiftline";
-  for (const auto &lane : current_controlled_lane_array_.lanes)
+  for (const auto& lane : current_controlled_lane_array_.lanes)
   {
     inside_line_marker.points.clear();
     for (size_t idx = 0; idx < lane.waypoints.size(); idx++)
@@ -148,7 +147,6 @@ void DecisionMakerNode::displayMarker(void)
     }
     marker_array.markers.push_back(inside_line_marker);
   }
-
 
   Pubs["detection_area"].publish(detection_area_marker);
   Pubs["crossroad_bbox"].publish(bbox_array);
@@ -200,7 +198,7 @@ void DecisionMakerNode::publishToVelocityArray()
   int count = 0;
   std_msgs::Float64MultiArray msg;
 
-  for (const auto &i : current_finalwaypoints_.waypoints)
+  for (const auto& i : current_finalwaypoints_.waypoints)
   {
     msg.data.push_back(amathutils::mps2kmph(i.twist.twist.linear.x));
     if (++count >= 10)
