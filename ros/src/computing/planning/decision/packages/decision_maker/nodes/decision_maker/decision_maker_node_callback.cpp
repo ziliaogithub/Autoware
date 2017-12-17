@@ -236,7 +236,7 @@ void DecisionMakerNode::setWaypointState(autoware_msgs::LaneArray& lane_array)
   }
   // STOP
   std::vector<StopLine> stoplines = g_vmap.findByFilter([&](const StopLine& stopline) {
-    return (g_vmap.findByKey(Key<RoadSign>(stopline.signid)).type == (int)vector_map_msgs::RoadSign::TYPE_STOP);
+    return ((g_vmap.findByKey(Key<RoadSign>(stopline.signid)).type & (autoware_msgs::WaypointState::TYPE_STOP | autoware_msgs::WaypointState::TYPE_STOPLINE))!=0);
   });
 
   for (auto& lane : lane_array.lanes)
@@ -263,7 +263,7 @@ void DecisionMakerNode::setWaypointState(autoware_msgs::LaneArray& lane_array)
                   lane.waypoints.at(wp_idx).pose.pose.position.y, lane.waypoints.at(wp_idx + 1).pose.pose.position.x,
                   lane.waypoints.at(wp_idx + 1).pose.pose.position.y))
           {
-            lane.waypoints.at(wp_idx).wpstate.stopline_state = 1;
+            lane.waypoints.at(wp_idx).wpstate.stopline_state = g_vmap.findByKey(Key<RoadSign>(stopline.signid)).type;
             // lane.waypoints.at(wp_idx + 1).wpstate.stopline_state = 1;
           }
         }
@@ -331,8 +331,10 @@ void DecisionMakerNode::callbackFromFinalWaypoint(const autoware_msgs::lane& msg
                    param_stopline_target_waypoint_ :
                    current_finalwaypoints_.waypoints.size() - 1;
 
-  if (current_finalwaypoints_.waypoints.at(idx).wpstate.stopline_state)
+  if (current_finalwaypoints_.waypoints.at(idx).wpstate.stopline_state == autoware_msgs::WaypointState::TYPE_STOPLINE)
     ctx->setCurrentState(state_machine::DRIVE_ACC_STOPLINE_STATE);
+  if (current_finalwaypoints_.waypoints.at(idx).wpstate.stopline_state == autoware_msgs::WaypointState::TYPE_STOP)
+    ctx->setCurrentState(state_machine::DRIVE_ACC_STOP_STATE);
   // steering
   idx = current_finalwaypoints_.waypoints.size() - 1 > param_target_waypoint_ ?
             param_target_waypoint_ :
