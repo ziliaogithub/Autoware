@@ -100,6 +100,7 @@ void DecisionMakerNode::callbackFromConfig(const autoware_msgs::ConfigDecisionMa
 
   param_target_waypoint_ = msg.target_waypoint;
   param_stopline_target_waypoint_ = msg.stopline_target_waypoint;
+  param_stopline_target_ratio_ = msg.stopline_target_ratio;
   param_shift_width_ = msg.shift_width;
 
   param_crawl_velocity_ = msg.crawl_velocity;
@@ -137,6 +138,8 @@ void DecisionMakerNode::callbackFromObjectDetector(const autoware_msgs::CloudClu
   // flag(foundOthervehicleforintersectionstop).
   // The flag is referenced in the stopline state, and if it is true it will
   // continue to stop.
+
+  static double setFlagTime = 0.0;
   bool l_detection_flag = false;
   if (ctx->isCurrentState(state_machine::DRIVE_STATE))
   {
@@ -159,12 +162,16 @@ void DecisionMakerNode::callbackFromObjectDetector(const autoware_msgs::CloudClu
             baselink_pose.pose.position.y >= detectionArea_.y2 * param_detection_area_rate_)
         {
           l_detection_flag = true;
-          break;
+          setFlagTime == ros::Time::now().toSec();
+	  break;
         }
       }
     }
   }
-  foundOtherVehicleForIntersectionStop_ = l_detection_flag;
+  /* The true state continues for more than 1 second. */
+  if(l_detection_flag || (ros::Time::now().toSec() - setFlagTime) >= 1.0/*1.0sec*/){
+	  foundOtherVehicleForIntersectionStop_ = l_detection_flag;
+  }
 }
 
 void DecisionMakerNode::callbackFromPointsRaw(const sensor_msgs::PointCloud2::ConstPtr& msg)
@@ -340,9 +347,10 @@ void DecisionMakerNode::callbackFromFinalWaypoint(const autoware_msgs::lane& msg
   // cached
   current_finalwaypoints_ = msg;
 
-  size_t idx = current_finalwaypoints_.waypoints.size() - 1 > param_stopline_target_waypoint_ ?
-                   param_stopline_target_waypoint_ :
-                   current_finalwaypoints_.waypoints.size() - 1;
+  size_t idx = param_stopline_target_waypoint_;
+  idx = current_finalwaypoints_.waypoints.size() - 1 > idx ?
+	  idx :
+	  current_finalwaypoints_.waypoints.size() - 1;
 
   if (current_finalwaypoints_.waypoints.at(idx).wpstate.stopline_state == autoware_msgs::WaypointState::TYPE_STOPLINE)
     ctx->setCurrentState(state_machine::DRIVE_ACC_STOPLINE_STATE);
